@@ -10,17 +10,24 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/textract"
 	"github.com/bwmarrin/discordgo"
+	"github.com/joho/godotenv"
 )
 
 var textractSession *textract.Textract
-var Token string
+var token string
 
 func init() {
+
+	err := godotenv.Load()
+	if err != nil {
+		panic("Unable to load env file")
+	}
+
 	textractSession = textract.New(session.Must(session.NewSession(&aws.Config{
 		Region: aws.String("us-east-1"),
 	})))
 
-	Token = ""
+	token = os.Getenv("discord_token")
 }
 
 func parseTextFromImage() {
@@ -78,26 +85,23 @@ func sendMessage(s *discordgo.Session, channelID, message string) {
 }
 
 func main() {
-	dg, err := discordgo.New("Bot " + Token)
+	dg, err := discordgo.New("Bot " + token)
 	if err != nil {
 		fmt.Println("Error creating Discord session", err)
 	}
 
 	dg.AddHandler(messageCreate)
 
-	// Open a websocket connection to Discord and begin listening.
 	err = dg.Open()
 	if err != nil {
 		fmt.Println("error opening connection,", err)
 		return
 	}
 
-	// Wait here until CTRL-C or other term signal is received.
 	fmt.Println("Bot is now running. Press CTRL-C to exit.")
 	sc := make(chan os.Signal, 1)
 	signal.Notify(sc, syscall.SIGINT, syscall.SIGTERM, os.Interrupt, os.Kill)
 	<-sc
 
-	// Cleanly close down the Discord session.
 	dg.Close()
 }
