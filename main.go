@@ -15,6 +15,7 @@ import (
 
 var textractSession *textract.Textract
 var token string
+var channelID string
 
 func init() {
 
@@ -28,6 +29,7 @@ func init() {
 	})))
 
 	token = os.Getenv("discord_token")
+	channelID = os.Getenv("dev_channel_id")
 }
 
 func parseTextFromImage() {
@@ -84,6 +86,16 @@ func sendMessage(s *discordgo.Session, channelID, message string) {
 	}
 }
 
+func readMessagesFromChannel(session *discordgo.Session, channelId string) { //([]*discordgo.Message, error) {
+	messages, err := session.ChannelMessages(channelId, 100, "", "", "")
+	if err != nil {
+		fmt.Println(err)
+	}
+	for _, message := range messages {
+		fmt.Printf("Message: %s \n", message.Content)
+	}
+}
+
 func main() {
 	dg, err := discordgo.New("Bot " + token)
 	if err != nil {
@@ -91,6 +103,7 @@ func main() {
 	}
 
 	dg.AddHandler(messageCreate)
+	readMessagesFromChannel(dg, channelID)
 
 	err = dg.Open()
 	if err != nil {
