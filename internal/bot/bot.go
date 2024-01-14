@@ -80,21 +80,12 @@ func (b *DiscordBot) GetAllMessagesFromChannel(limit int, beforeId string, after
 }
 
 func (b *DiscordBot) readMessagesInLastWeek() ([]*discordgo.Message, error) {
-	now := time.Now()
-	oneWeekAgo := now.AddDate(0, 0, -7)
+	oneWeekAgo := time.Now().AddDate(0, 0, -7)
+	snowFlake := createSnowFlake(oneWeekAgo.UTC().UnixMilli())
 
-	messages, err := b.GetAllMessagesFromChannel(100, "", "", "")
+	messages, err := b.GetAllMessagesFromChannel(100, "", strconv.FormatInt(snowFlake, 10), "")
 
-	var filteredMessages []*discordgo.Message
-	for _, message := range messages {
-		createdAt := message.Timestamp
-
-		if createdAt.After(oneWeekAgo) {
-			filteredMessages = append(filteredMessages, message)
-		}
-	}
-
-	return filteredMessages, err
+	return messages, err
 }
 
 func (b *DiscordBot) CalculateScoreboard() {
@@ -105,16 +96,21 @@ func (b *DiscordBot) CalculateScoreboard() {
 	}
 
 	for _, message := range messages {
-		fmt.Println(message.Content)
+		fmt.Println(message.Timestamp)
 	}
 }
 
-func (b *DiscordBot) getTimestampFromSnowFlake(snowflake string) (time.Time, error) {
+func getTimestampFromSnowFlake(snowflake string) (time.Time, error) {
 	snowflakeAsInt, err := strconv.ParseInt(snowflake, 10, 64)
 
 	if err != nil {
 		fmt.Println("Error:", err)
 	}
 
-	return time.Unix(((snowflakeAsInt>>22)+1288834974657)/1000, 0).UTC(), err
+	return time.UnixMilli(((snowflakeAsInt >> 22) + 1420070400000)).UTC(), err
+}
+
+func createSnowFlake(timestamp int64) int64 {
+	const discordEpoch = 1420070400000
+	return (timestamp - discordEpoch) << 22
 }
