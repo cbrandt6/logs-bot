@@ -1,7 +1,6 @@
 package textract
 
 import (
-	"fmt"
 	"os"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -18,10 +17,12 @@ func NewTextractWrapper() *TextractWrapper {
 	wrapper.session = textract.New(session.Must(session.NewSession(&aws.Config{
 		Region: aws.String("us-east-1"),
 	})))
+	return wrapper
 }
 
-func (t TextractWrapper) ParseTextFromImage() {
-	file, err := os.ReadFile("sample.png")
+func (t TextractWrapper) ParseTextLinesFromImage() ([]string, error) {
+	file, err := os.ReadFile("./test/IMG_1949.png")
+
 	if err != nil {
 		panic(err)
 	}
@@ -31,15 +32,18 @@ func (t TextractWrapper) ParseTextFromImage() {
 			Bytes: file,
 		},
 	})
+
 	if err != nil {
 		panic(err)
 	}
 
-	fmt.Println(resp)
+	lines := make([]string, 0, len(resp.Blocks))
 
-	for i := 1; i < len(resp.Blocks); i++ {
-		if *resp.Blocks[i].BlockType == "WORD" {
-			fmt.Println(*resp.Blocks[i].Text)
+	for _, block := range resp.Blocks {
+		if *block.BlockType == "LINE" {
+			lines = append(lines, *block.Text)
 		}
 	}
+
+	return lines, err
 }

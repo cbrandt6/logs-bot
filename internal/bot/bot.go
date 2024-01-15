@@ -2,6 +2,7 @@ package bot
 
 import (
 	"fmt"
+	"logs-bot/internal/textract"
 	"strconv"
 	"time"
 
@@ -9,16 +10,17 @@ import (
 )
 
 type DiscordBot struct {
-	token     string
-	channelId string
-	session   *discordgo.Session
+	token           string
+	channelId       string
+	session         *discordgo.Session
+	textractWrapper *textract.TextractWrapper
 }
 
 func NewBot(token string, channelId string) *DiscordBot {
 	bot := new(DiscordBot)
 	bot.token = token
 	bot.channelId = channelId
-
+	bot.textractWrapper = textract.NewTextractWrapper()
 	return bot
 }
 
@@ -97,6 +99,18 @@ func (b *DiscordBot) CalculateScoreboard() {
 
 	for _, message := range messages {
 		fmt.Println(message.Timestamp)
+	}
+}
+
+func (b *DiscordBot) ParseTextFromImage() {
+	lines, err := b.textractWrapper.ParseTextLinesFromImage()
+
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	for _, line := range lines {
+		fmt.Println(line)
 	}
 }
 
