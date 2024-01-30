@@ -99,8 +99,7 @@ func (b *DiscordBot) GetAllMessagesFromChannel(limit int, beforeId string, after
 }
 
 func (b *DiscordBot) readMessagesInLastWeek() ([]*discordgo.Message, error) {
-	oneWeekAgo := time.Now().AddDate(0, 0, -7)
-	oneWeekAgo = time.Date(oneWeekAgo.Year(), oneWeekAgo.Month(), oneWeekAgo.Day(), 0, 0, 0, 0, oneWeekAgo.Location())
+	oneWeekAgo := convertToMidnight(time.Now().AddDate(0, 0, -7))
 	snowFlake := createSnowFlake(oneWeekAgo.UTC().UnixMilli())
 
 	messages, err := b.GetAllMessagesFromChannel(100, "", strconv.FormatInt(snowFlake, 10), "")
@@ -108,8 +107,46 @@ func (b *DiscordBot) readMessagesInLastWeek() ([]*discordgo.Message, error) {
 	return messages, err
 }
 
+func (b *DiscordBot) readMessageSinceSunday() ([]*discordgo.Message, error) {
+	// Get Sunday 00:00:00
+	lastSunday := getLastSunday()
+	fmt.Println(lastSunday)
+	lastSundayFlake := createSnowFlake(lastSunday.UTC().UnixMilli())
+
+	yesterdayDayEoD := convertToEndOfDay(time.Now().AddDate(0, 0, -1))
+	fmt.Println(yesterdayDayEoD)
+	yesterdayFlake := createSnowFlake(yesterdayDayEoD.UTC().UnixMilli())
+
+	// Get messages
+	messages, err := b.GetAllMessagesFromChannel(100, strconv.FormatInt(yesterdayFlake, 10), strconv.FormatInt(lastSundayFlake, 10), "")
+
+	return messages, err
+}
+
+func getLastSunday() time.Time {
+	currentTime := time.Now()
+	var lastSunday time.Time
+	// If currently Sunday
+	if currentTime.Weekday() == 0 {
+		lastSunday = currentTime.AddDate(0, 0, -7)
+		// Any other day
+	} else {
+		lastSunday = currentTime.AddDate(0, 0, -int(currentTime.Weekday()))
+	}
+	lastSunday = convertToMidnight(lastSunday)
+	return lastSunday
+}
+
+func convertToMidnight(date time.Time) time.Time {
+	return time.Date(date.Year(), date.Month(), date.Day(), 0, 0, 0, 0, date.Location())
+}
+
+func convertToEndOfDay(date time.Time) time.Time {
+	return time.Date(date.Year(), date.Month(), date.Day(), 23, 59, 59, 0, date.Location())
+}
+
 func (b *DiscordBot) CalculateScoreboard() {
-	messages, err := b.readMessagesInLastWeek()
+	messages, err := b.readMessageSinceSunday()
 	if err != nil {
 		fmt.Println(err)
 	}
