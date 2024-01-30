@@ -21,6 +21,18 @@ type DiscordBot struct {
 	textractWrapper *textract.TextractWrapper
 }
 
+type UserStats struct {
+	userId      string
+	username    string
+	totalWeight int
+	totalSets   int
+}
+
+type ImageStats struct {
+	totalWeight int
+	totalSets   int
+}
+
 func NewBot(token string, channelId string) *DiscordBot {
 	bot := new(DiscordBot)
 	bot.token = token
@@ -231,31 +243,9 @@ func isImage(filename string) bool {
 	}
 }
 
-func getTimestampFromSnowFlake(snowflake string) (time.Time, error) {
-	snowflakeAsInt, err := strconv.ParseInt(snowflake, 10, 64)
-
-	if err != nil {
-		fmt.Println("Error:", err)
-	}
-
-	return time.UnixMilli(((snowflakeAsInt >> 22) + 1420070400000)).UTC(), err
-}
-
 func createSnowFlake(timestamp int64) int64 {
 	const discordEpoch = 1420070400000
 	return (timestamp - discordEpoch) << 22
-}
-
-type UserStats struct {
-	userId      string
-	username    string
-	totalWeight int
-	totalSets   int
-}
-
-type ImageStats struct {
-	totalWeight int
-	totalSets   int
 }
 
 func parseIntFromString(str string) (int, error) {
