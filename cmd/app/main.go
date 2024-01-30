@@ -4,8 +4,6 @@ import (
 	"fmt"
 	"logs-bot/internal/bot"
 	"os"
-	"os/signal"
-	"syscall"
 
 	"github.com/joho/godotenv"
 )
@@ -22,6 +20,7 @@ func init() {
 
 	token = os.Getenv("discord_token")
 	channelID = os.Getenv("dev_channel_id")
+
 }
 
 func main() {
@@ -31,13 +30,12 @@ func main() {
 		fmt.Println("Error connecting", err)
 		return
 	}
-	bot.GetAllMessagesFromChannel()
+	bot.CalculateScoreboard()
+	//bot.Open()
+	//fmt.Println("Bot is now running. Press CTRL-C to exit.")
+	// sc := make(chan os.Signal, 1)
+	// signal.Notify(sc, syscall.SIGINT, syscall.SIGTERM, os.Interrupt, syscall.SIGTERM)
+	// <-sc
 
-	bot.Open()
-	fmt.Println("Bot is now running. Press CTRL-C to exit.")
-	sc := make(chan os.Signal, 1)
-	signal.Notify(sc, syscall.SIGINT, syscall.SIGTERM, os.Interrupt, syscall.SIGTERM)
-	<-sc
-
-	bot.Close()
+	//bot.Close()
 }
